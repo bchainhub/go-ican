@@ -1,4 +1,4 @@
-package iban
+package ican
 
 import (
 	"errors"
@@ -9,17 +9,17 @@ import (
 	"strings"
 )
 
-// CountrySettings contains length for IBAN and format for BBAN
+// CountrySettings contains length for ICAN and format for BCAN
 type CountrySettings struct {
-	// Length of IBAN code for this country
+	// Length of ICAN code for this country
 	Length int
 
-	// Format of BBAN part of IBAN for this country
+	// Format of BCAN part of ICAN for this country
 	Format string
 }
 
-// IBAN struct
-type IBAN struct {
+// ICAN struct
+type ICAN struct {
 	// Full code
 	Code string
 
@@ -35,12 +35,12 @@ type IBAN struct {
 	// Country settings
 	CountrySettings *CountrySettings
 
-	// Country specific bban part
-	BBAN string
+	// Country specific bcan part
+	BCAN string
 }
 
 /*
-	Taken from http://www.tbg5-finance.org/ code example
+	Taken from https://gist.github.com/raisty/8ac7c1964a5293df91c3d4d9d088d8fd
 */
 var countries = map[string]CountrySettings{
 	"AD": CountrySettings{Length: 24, Format: "F04F04A12"},
@@ -77,6 +77,7 @@ var countries = map[string]CountrySettings{
 	"IL": CountrySettings{Length: 23, Format: "F03F03F13"},
 	"IS": CountrySettings{Length: 26, Format: "F04F02F06F10"},
 	"IT": CountrySettings{Length: 27, Format: "U01F05F05A12"},
+	"IQ": CountrySettings{Length: 23, Format: "U04F03A12"},
 	"JO": CountrySettings{Length: 30, Format: "U04F04A18"},
 	"KW": CountrySettings{Length: 30, Format: "U04A22"},
 	"KZ": CountrySettings{Length: 20, Format: "F03A13"},
@@ -109,21 +110,54 @@ var countries = map[string]CountrySettings{
 	"SK": CountrySettings{Length: 24, Format: "F04F06F10"},
 	"SM": CountrySettings{Length: 27, Format: "U01F05F05A12"},
 	"ST": CountrySettings{Length: 25, Format: "F08F11F02"},
+	"SV": CountrySettings{Length: 28, Format: "U04F20"},
 	"TL": CountrySettings{Length: 23, Format: "F03F14F02"},
 	"TN": CountrySettings{Length: 24, Format: "F02F03F13F02"},
 	"TR": CountrySettings{Length: 26, Format: "F05A01A16"},
 	"UA": CountrySettings{Length: 29, Format: "F06A19"},
+	"VA": CountrySettings{Length: 22, Format: "F18"},
 	"VG": CountrySettings{Length: 24, Format: "U04F16"},
 	"XK": CountrySettings{Length: 20, Format: "F04F10F02"},
+	// Custom ICAN
+	"AO": CountrySettings{Length: 25, Format: "F21"},
+	"BF": CountrySettings{Length: 27, Format: "F23"},
+	"BI": CountrySettings{Length: 16, Format: "F12"},
+	"BJ": CountrySettings{Length: 28, Format: "F24"},
+	"CI": CountrySettings{Length: 28, Format: "U02F22"},
+	"CM": CountrySettings{Length: 27, Format: "F23"},
+	"CV": CountrySettings{Length: 25, Format: "F21"},
+	"DZ": CountrySettings{Length: 24, Format: "F20"},
+	"IR": CountrySettings{Length: 26, Format: "F22"},
+	"MG": CountrySettings{Length: 27, Format: "F23"},
+	"ML": CountrySettings{Length: 28, Format: "U01F23"},
+	"MZ": CountrySettings{Length: 25, Format: "F21"},
+	"SN": CountrySettings{Length: 28, Format: "U01F23"},
+	// French Republic subdivision
+	"GF": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"GP": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"MQ": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"RE": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"PF": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"TF": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"YT": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"NC": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"BL": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"MF": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"PM": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	"WF": CountrySettings{Length: 27, Format: "F05F05A11F02"},
+	// Cryptocurrencies
+	"CB": CountrySettings{Length: 44, Format: "H40"},
+	"AB": CountrySettings{Length: 44, Format: "H40"},
+	"CE": CountrySettings{Length: 44, Format: "H40"},
 }
 
-func validateCheckDigits(iban string) error {
+func validateCheckDigits(ican string) error {
 	// Move the four initial characters to the end of the string
-	iban = iban[4:] + iban[:4]
+	ican = ican[4:] + ican[:4]
 
 	// Replace each letter in the string with two digits, thereby expanding the string, where A = 10, B = 11, ..., Z = 35
 	mods := ""
-	for _, c := range iban {
+	for _, c := range ican {
 		// Get character code point value
 		i := int(c)
 
@@ -141,7 +175,7 @@ func validateCheckDigits(iban string) error {
 	// Create bignum from mod string and perform module
 	bigVal, success := new(big.Int).SetString(mods, 10)
 	if !success {
-		return errors.New("IBAN check digits validation failed")
+		return errors.New("ICAN check digits validation failed")
 	}
 
 	modVal := new(big.Int).SetInt64(97)
@@ -149,17 +183,17 @@ func validateCheckDigits(iban string) error {
 
 	// Check if module is equal to 1
 	if resVal.Int64() != 1 {
-		return errors.New("IBAN has incorrect check digits")
+		return errors.New("ICAN has incorrect check digits")
 	}
 
 	return nil
 }
 
-func validateBasicBankAccountNumber(bban string, format string) error {
+func validateBasicBankAccountNumber(bcan string, format string) error {
 	// Format regex to get parts
 	frx, err := regexp.Compile(`[ABCFLUW]\d{2}`)
 	if err != nil {
-		return fmt.Errorf("Failed to validate BBAN: %v", err.Error())
+		return fmt.Errorf("Failed to validate BCAN: %v", err.Error())
 	}
 
 	// Get format part strings
@@ -178,6 +212,8 @@ func validateBasicBankAccountNumber(bban string, format string) error {
 			bbr += "[A-Z]"
 		case "A":
 			bbr += "[0-9A-Za-z]"
+		case "H":
+			bbr += "[0-9A-Fa-f]"
 		case "B":
 			bbr += "[0-9A-Z]"
 		case "C":
@@ -189,81 +225,81 @@ func validateBasicBankAccountNumber(bban string, format string) error {
 		// Get repeat factor for group
 		repeat, atoiErr := strconv.Atoi(ps[1:])
 		if atoiErr != nil {
-			return fmt.Errorf("Failed to validate BBAN: %v", atoiErr.Error())
+			return fmt.Errorf("Failed to validate BCAN: %v", atoiErr.Error())
 		}
 
 		// Add to regex
 		bbr += fmt.Sprintf("{%d}", repeat)
 	}
 
-	// Compile regex and validate BBAN
+	// Compile regex and validate BCAN
 	bbrx, err := regexp.Compile(bbr)
 	if err != nil {
-		return fmt.Errorf("Failed to validate BBAN: %v", err.Error())
+		return fmt.Errorf("Failed to validate BCAN: %v", err.Error())
 	}
 
-	if !bbrx.MatchString(bban) {
-		return errors.New("BBAN part of IBAN is not formatted according to country specification")
+	if !bbrx.MatchString(bcan) {
+		return errors.New("BCAN part of ICAN is not formatted according to country specification")
 	}
 
 	return nil
 }
 
-// NewIBAN create new IBAN with validation
-func NewIBAN(s string) (*IBAN, error) {
-	iban := IBAN{}
+// NewICAN create new ICAN with validation
+func NewICAN(s string) (*ICAN, error) {
+	ican := ICAN{}
 
 	// Prepare string: remove spaces and convert to upper case
 	s = strings.ToUpper(strings.Replace(s, " ", "", -1))
-	iban.Code = s
+	ican.Code = s
 
 	// Validate characters
 	r, err := regexp.Compile(`^[0-9A-Z]*$`)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to validate IBAN: %v", err.Error())
+		return nil, fmt.Errorf("Failed to validate ICAN: %v", err.Error())
 	}
 
 	if !r.MatchString(s) {
-		return nil, errors.New("IBAN can contain only alphanumeric characters")
+		return nil, errors.New("ICAN can contain only alphanumeric characters")
 	}
 
 	// Get country code and check digits
 	r, err = regexp.Compile(`^\D\D\d\d`)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to validate IBAN: %v", err.Error())
+		return nil, fmt.Errorf("Failed to validate ICAN: %v", err.Error())
 	}
 
 	hs := r.FindString(s)
 	if hs == "" {
-		return nil, errors.New("IBAN must start with country code (2 characters) and check digits (2 digits)")
+		return nil, errors.New("ICAN must start with country code (2 characters) and check digits (2 digits)")
 	}
 
-	iban.CountryCode = hs[0:2]
-	iban.CheckDigits = hs[2:4]
+	ican.CountryCode = hs[0:2]
+	ican.CheckDigits = hs[2:4]
 
 	// Get country settings for country code
-	cs, ok := countries[iban.CountryCode]
+	cs, ok := countries[ican.CountryCode]
 	if !ok {
-		return nil, fmt.Errorf("Unsupported country code %v", iban.CountryCode)
+		return nil, fmt.Errorf("Unsupported country code %v", ican.CountryCode)
 	}
 
-	iban.CountrySettings = &cs
+	ican.CountrySettings = &cs
 
 	// Validate code length
 	if len(s) != cs.Length {
-		return nil, fmt.Errorf("IBAN length %d does not match length %d specified for country code %v", len(s), cs.Length, iban.CountryCode)
+		return nil, fmt.Errorf("ICAN length %d does not match length %d specified for country code %v", len(s), cs.Length, ican.CountryCode)
 	}
 
-	// Set and validate BBAN part, the part after the language code and check digits
-	iban.BBAN = s[4:]
+	// Set and validate BCAN part, the part after the language code and check digits
+	ican.BCAN = s[4:]
 
-	err = validateBasicBankAccountNumber(iban.BBAN, iban.CountrySettings.Format)
+	err = validateBasicBankAccountNumber(ican.BCAN, ican.CountrySettings.Format)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validate check digits with mod97
-	err = validateCheckDigits(iban.Code)
+	err = validateCheckDigits(ican.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +311,7 @@ func NewIBAN(s string) (*IBAN, error) {
 		s = s[4:]
 	}
 
-	iban.PrintCode = prc + s
+	ican.PrintCode = prc + s
 
-	return &iban, nil
+	return &ican, nil
 }
