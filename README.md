@@ -1,8 +1,8 @@
 ### Basic Golang ICAN validator
 
 Validations:
-- Validate if country code and check digits are present
-- Validate if country code is in accepted country code list
+- Validate if country/crypto code and check digits are present
+- Validate if country/crypto code is in accepted country code list
 - Validate national BCAN code format
 - Validate mod97 check digits
 

@@ -189,7 +189,7 @@ func validateCheckDigits(ican string) error {
 	return nil
 }
 
-func validateBasicBankAccountNumber(bcan string, format string) error {
+func validateBasicCryptoAccountNumber(bcan string, format string) error {
 	// Format regex to get parts
 	frx, err := regexp.Compile(`[ABCFLUW]\d{2}`)
 	if err != nil {
@@ -293,7 +293,7 @@ func NewICAN(s string) (*ICAN, error) {
 	// Set and validate BCAN part, the part after the language code and check digits
 	ican.BCAN = s[4:]
 
-	err = validateBasicBankAccountNumber(ican.BCAN, ican.CountrySettings.Format)
+	err = validateBasicCryptoAccountNumber(ican.BCAN, ican.CountrySettings.Format)
 	if err != nil {
 		return nil, err
 	}
