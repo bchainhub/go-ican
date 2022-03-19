@@ -1,3 +1,5 @@
+## Go-ICAN
+
 ### Basic Golang ICAN validator
 
 Validations:
@@ -28,3 +30,7 @@ Test suite includes example of ICAN's for most countries and fake ICAN's. Errors
 			fmt.Printf("%v\n", ican.Code)
 		}
 	}
+
+## License
+
+[CORE License](LICENSE)
